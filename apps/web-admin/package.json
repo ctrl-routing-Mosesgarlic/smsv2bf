@@ -1,0 +1,32 @@
+{
+  "name": "web-admin",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack --port 3004",
+    "build": "next build",
+    "start": "next start --turbopack",
+    "lint": "eslint --max-warnings 0",
+    "check-types": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@cbc/config": "*",
+    "@cbc/shared": "*",
+    "@cbc/ui": "*",
+    "next": "16.2.10",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.15.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "eslint": "^9.39.1",
+    "tailwindcss": "^4",
+    "typescript": "5.9.2"
+  }
+}

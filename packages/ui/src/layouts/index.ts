@@ -1,0 +1,9 @@
+export { AuthLayout } from './AuthLayout';
+export { DashboardLayout } from './DashboardLayout';
+export { AdminDashboardLayout } from './AdminDashboardLayout';
+export { TeacherDashboardLayout } from './TeacherDashboardLayout';
+export { FinanceDashboardLayout } from './FinanceDashboardLayout';
+export { StaffDashboardLayout } from './StaffDashboardLayout';
+export { ExternalPortalLayout } from './ExternalPortalLayout';
+export { StudentPortalLayout } from './StudentPortalLayout';
+export { ParentPortalLayout } from './ParentPortalLayout';

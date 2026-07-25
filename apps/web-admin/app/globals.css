@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@cbc/ui/tokens.css";
+
+@theme inline {
+  --color-primary: var(--cbc-primary);
+  --color-on-primary: var(--cbc-on-primary);
+  --color-primary-hover: var(--cbc-primary-hover);
+  --color-primary-active: var(--cbc-primary-active);
+  --color-primary-light: var(--cbc-primary-light);
+  --color-primary-border: var(--cbc-primary-border);
+
+  --color-surface: var(--cbc-surface);
+  --color-surface-muted: var(--cbc-surface-muted);
+  --color-surface-elevated: var(--cbc-surface-elevated);
+  --color-surface-dark: var(--cbc-surface-dark);
+  --color-surface-dark-muted: var(--cbc-surface-dark-muted);
+
+  --color-text-primary: var(--cbc-text-primary);
+  --color-text-secondary: var(--cbc-text-secondary);
+  --color-text-muted: var(--cbc-text-muted);
+  --color-text-on-primary: var(--cbc-text-on-primary);
+  --color-text-on-dark: var(--cbc-text-on-dark);
+
+  --color-border-default: var(--cbc-border);
+  --color-border-light: var(--cbc-border-light);
+  --color-border-focus: var(--cbc-border-focus);
+
+  --color-success: var(--cbc-success);
+  --color-success-light: var(--cbc-success-light);
+  --color-success-border: var(--cbc-success-border);
+  --color-warning: var(--cbc-warning);
+  --color-warning-light: var(--cbc-warning-light);
+  --color-warning-border: var(--cbc-warning-border);
+  --color-danger: var(--cbc-danger);
+  --color-danger-light: var(--cbc-danger-light);
+  --color-danger-border: var(--cbc-danger-border);
+  --color-info: var(--cbc-info);
+  --color-info-light: var(--cbc-info-light);
+  --color-info-border: var(--cbc-info-border);
+
+  --font-sans: var(--cbc-font-sans);
+  --font-mono: var(--cbc-font-mono);
+
+  --radius-sm: var(--cbc-radius-sm);
+  --radius-md: var(--cbc-radius-md);
+  --radius-lg: var(--cbc-radius-lg);
+  --radius-xl: var(--cbc-radius-xl);
+  --radius-2xl: var(--cbc-radius-2xl);
+
+  --shadow-sm: var(--cbc-shadow-sm);
+  --shadow-md: var(--cbc-shadow-md);
+  --shadow-lg: var(--cbc-shadow-lg);
+  --shadow-xl: var(--cbc-shadow-xl);
+}
+
+body {
+  background: var(--cbc-surface-muted);
+  color: var(--cbc-text-primary);
+  font-family: var(--cbc-font-sans);
+}
