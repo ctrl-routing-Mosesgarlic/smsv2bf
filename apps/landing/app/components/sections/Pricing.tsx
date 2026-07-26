@@ -104,7 +104,7 @@ const plans: Plan[] = [
 ];
 
 function PricingCard({ plan }: { plan: Plan }) {
-  const buttonVariant = plan.popular ? "primary" : "ghost";
+  const buttonVariant = plan.popular ? "primary" : "outline";
 
   return (
     <div className="flex flex-col">
