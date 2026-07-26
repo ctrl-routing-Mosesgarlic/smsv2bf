@@ -52,12 +52,12 @@ export default function Modules() {
 
       <StackingCards className="mt-16">
         {moduleGroups.map((group) => (
-          <div key={group.id} className={`flex h-full w-full gap-8 bg-surface p-6 ${group.id % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+          <div key={group.id} className={`flex w-full gap-8 bg-surface p-6 ${group.id % 2 === 0 ? 'flex-row-reverse' : ''}`}>
             <div className="flex w-1/2 shrink-0 items-center justify-center overflow-hidden bg-surface">
               <img
                 src={group.image}
                 alt={group.category}
-                className="h-full w-full object-contain border-[6px] border-white"
+                className="h-full w-full object-cover border-[6px] border-white"
               />
             </div>
             <div className="flex w-1/2 flex-col justify-center">

@@ -1,74 +1,87 @@
 "use client"
 
-import { useRef, Children } from "react"
-import { useGSAP } from "@gsap/react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useRef, useState, useEffect, Children, type ReactNode } from "react"
+import { motion, useScroll, useTransform } from "motion/react"
 import { cn } from "../lib/utils"
 
-gsap.registerPlugin(ScrollTrigger)
-
 type StackingCardsProps = {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
 }
 
 export function StackingCards({ children, className }: StackingCardsProps) {
   const container = useRef<HTMLDivElement>(null)
-  const cardsContainer = useRef<HTMLDivElement>(null)
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [navbarHeight, setNavbarHeight] = useState(0)
 
-  useGSAP(
-    () => {
-      const cards = cardRefs.current
-      const totalCards = cards.length
-      if (totalCards === 0) return
+  useEffect(() => {
+    const navbar = document.querySelector("[class*='fixed'][class*='top-0']")
+    if (navbar) setNavbarHeight(navbar.getBoundingClientRect().height + 12)
+  }, [])
 
-      gsap.set(cards.slice(1), { y: "100%" })
+  const { scrollYProgress } = useScroll({
+    target: container,
+    offset: ["start start", "end end"],
+  })
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: container.current,
-          start: "top top",
-          end: `+=${window.innerHeight * (totalCards - 1)}`,
-          pin: true,
-          scrub: 0.5,
-          pinSpacing: true,
-        },
-      })
-
-      for (let i = 0; i < totalCards - 1; i++) {
-        const current = cards[i]
-        const next = cards[i + 1]
-        if (!current || !next) continue
-
-        tl.to(
-          current,
-          { scale: 0.7, rotation: 3, duration: 1, ease: "none" },
-          i,
-        )
-        tl.to(next, { y: "0%", duration: 1, ease: "none" }, i)
-      }
-    },
-    { scope: container },
-  )
+  const count = Children.count(children)
 
   return (
-    <div ref={container} className={cn("relative", className)}>
-      <div
-        ref={cardsContainer}
-        className="relative h-[90vh] w-full overflow-hidden"
-      >
-        {Children.map(children, (child, i) => (
-          <div
+    <div
+      ref={container}
+      className={cn("relative flex flex-col items-center", className)}
+    >
+      {Children.map(children, (child, i) => {
+        const targetScale = Math.max(0.5, 1 - (count - i - 1) * 0.1)
+
+        return (
+          <StackingCard
             key={i}
-            ref={(el) => { cardRefs.current[i] = el }}
-            className="absolute inset-0 flex items-center justify-center"
+            index={i}
+            progress={scrollYProgress}
+            range={[i * (1 / count), 1]}
+            targetScale={targetScale}
+            navbarHeight={navbarHeight}
           >
-            <div className="h-full w-full">{child}</div>
-          </div>
-        ))}
-      </div>
+            {child}
+          </StackingCard>
+        )
+      })}
+    </div>
+  )
+}
+
+type StackingCardProps = {
+  children: ReactNode
+  index: number
+  progress: any
+  range: [number, number]
+  targetScale: number
+  navbarHeight: number
+}
+
+function StackingCard({
+  children,
+  index,
+  progress,
+  range,
+  targetScale,
+  navbarHeight,
+}: StackingCardProps) {
+  const scale = useTransform(progress, range, [1, targetScale])
+
+  return (
+    <div
+      className="sticky mb-8 flex w-full items-center justify-center"
+      style={{ top: navbarHeight }}
+    >
+      <motion.div
+        style={{
+          scale,
+        }}
+        className="w-full origin-top"
+      >
+        {children}
+      </motion.div>
     </div>
   )
 }
