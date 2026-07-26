@@ -12,10 +12,7 @@ export default function SectionWrapper({ children, className }: SectionWrapperPr
     <div className="w-full px-12">
       <div className="mx-auto max-w-[72rem] border-l border-r border-border py-4">
         <div className={cn("relative overflow-hidden border border-border py-44 px-24", className)}>
-          <Corner position="tl" />
-          <Corner position="tr" />
-          <Corner position="bl" />
-          <Corner position="br" />
+          <Corner corners="all" />
           {children}
         </div>
       </div>

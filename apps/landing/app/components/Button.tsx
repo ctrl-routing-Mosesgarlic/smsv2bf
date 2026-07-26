@@ -20,14 +20,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof
 export default function Button({ variant = "primary", className, ...props }: ButtonProps) {
   return (
     <button className={button({ variant, className })} {...props}>
-      {variant === "outline" && (
-        <>
-          <Corner position="tl" size={6} />
-          <Corner position="tr" size={6} />
-          <Corner position="bl" size={6} />
-          <Corner position="br" size={6} />
-        </>
-      )}
+      {variant === "outline" && <Corner corners="all" size={6} />}
       {props.children}
     </button>
   );
