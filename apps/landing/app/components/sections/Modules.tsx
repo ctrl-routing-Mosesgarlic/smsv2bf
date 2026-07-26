@@ -42,7 +42,7 @@ export default function Modules() {
   return (
     <SectionWrapper>
       <div className="flex flex-col items-center text-center">
-        <h2 className="text-3xl font-bold">All Modules</h2>
+        <h2 className="text-3xl font-semibold">All Modules</h2>
         <p className="mt-3 max-w-2xl text-foreground/60">
           CBC SchoolMS offers 15 integrated modules covering every aspect of
           school management.

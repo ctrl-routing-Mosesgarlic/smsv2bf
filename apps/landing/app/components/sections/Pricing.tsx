@@ -155,7 +155,7 @@ export default function Pricing() {
   return (
     <SectionWrapper>
       <div className="flex flex-col items-center text-center">
-        <h2 className="text-3xl font-bold">Simple, Transparent Pricing</h2>
+        <h2 className="text-3xl font-semibold">Simple, Transparent Pricing</h2>
         <p className="mt-3 max-w-2xl text-foreground/60">
           Choose the plan that fits your school. All plans include a 14-day free
           trial. No credit card required.

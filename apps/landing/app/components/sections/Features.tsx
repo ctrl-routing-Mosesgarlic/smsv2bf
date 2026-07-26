@@ -51,7 +51,7 @@ export default function Features() {
   return (
     <SectionWrapper>
       <div className="flex flex-col items-center text-center">
-        <h2 className="text-3xl font-bold">Why CBC SchoolMS?</h2>
+        <h2 className="text-3xl font-semibold">Why CBC SchoolMS?</h2>
         <p className="mt-3 text-foreground/60">
           Built specifically for Kenyan schools implementing the Competency-Based
           Curriculum
