@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes } from "react";
 import Corner from "./Corner";
 
 const button = tv({
-  base: "inline-flex items-center justify-center px-6 py-3 text-sm font-medium transition-colors cursor-pointer",
+  base: "relative inline-flex items-center justify-center px-6 py-3 text-sm font-medium transition-colors cursor-pointer",
   variants: {
     variant: {
       primary: "bg-primary text-primary-foreground hover:bg-primary/90",
