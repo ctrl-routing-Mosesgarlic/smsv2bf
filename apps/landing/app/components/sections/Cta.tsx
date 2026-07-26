@@ -14,7 +14,7 @@ export default function Cta() {
         </p>
         <div className="mt-10 flex items-center gap-4">
           <Button variant="primary">Start Your Free Trial</Button>
-          <Button variant="ghost">Talk to Sales</Button>
+          <Button variant="outline">Talk to Sales</Button>
         </div>
       </div>
     </SectionWrapper>

@@ -15,7 +15,7 @@ export default function Hero() {
         </p>
         <div className="mt-10 flex items-center gap-4">
           <Button variant="primary">Start Free Trial</Button>
-          <Button variant="ghost">Explore Modules</Button>
+          <Button variant="outline">Explore Modules</Button>
         </div>
       </div>
       <div className="mt-16 px-8">

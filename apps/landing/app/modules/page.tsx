@@ -146,7 +146,7 @@ export default function ModulesPage() {
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
             <Button variant="primary">Book a Demo</Button>
-            <Button variant="ghost">Contact Sales</Button>
+            <Button variant="outline">Contact Sales</Button>
           </div>
         </div>
       </SectionWrapper>

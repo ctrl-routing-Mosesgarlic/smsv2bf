@@ -70,7 +70,7 @@ export default function FaqPage() {
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
             <Button variant="primary">Contact Us</Button>
-            <Button variant="ghost">Book a Demo</Button>
+            <Button variant="outline">Book a Demo</Button>
           </div>
         </div>
       </SectionWrapper>
