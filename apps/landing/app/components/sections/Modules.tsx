@@ -2,6 +2,7 @@
 
 import SectionWrapper from "../SectionWrapper"
 import Button from "../Button"
+import { StackingCards } from "../StackingCards"
 
 const moduleGroups = [
   {
@@ -40,7 +41,7 @@ const moduleGroups = [
 
 export default function Modules() {
   return (
-    <SectionWrapper>
+    <SectionWrapper className="!overflow-visible">
       <div className="flex flex-col items-center text-center">
         <h2 className="text-3xl font-semibold">All Modules</h2>
         <p className="mt-3 max-w-2xl text-foreground/60">
@@ -49,10 +50,10 @@ export default function Modules() {
         </p>
       </div>
 
-      <div className="mt-16 flex flex-col gap-8">
+      <StackingCards className="mt-16">
         {moduleGroups.map((group) => (
-          <div key={group.id} className={`flex gap-8 bg-surface p-4 ${group.id % 2 === 0 ? 'flex-row-reverse' : ''}`}>
-            <div className="flex w-1/2 h-fit shrink-0 items-center justify-center overflow-hidden bg-surface">
+          <div key={group.id} className={`flex h-full w-full gap-8 bg-surface p-6 ${group.id % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+            <div className="flex w-1/2 shrink-0 items-center justify-center overflow-hidden bg-surface">
               <img
                 src={group.image}
                 alt={group.category}
@@ -68,7 +69,7 @@ export default function Modules() {
             </div>
           </div>
         ))}
-      </div>
+      </StackingCards>
     </SectionWrapper>
   )
 }

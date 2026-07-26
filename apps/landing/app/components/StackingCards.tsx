@@ -1,160 +1,74 @@
 "use client"
 
-import {
-  useRef,
-  useState,
-  useEffect,
-  useLayoutEffect,
-  Children,
-  cloneElement,
-  isValidElement,
-  type ReactNode,
-} from "react"
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react"
+import { useRef, Children } from "react"
+import { useGSAP } from "@gsap/react"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "../lib/utils"
 
+gsap.registerPlugin(ScrollTrigger)
+
 type StackingCardsProps = {
-  children: ReactNode
+  children: React.ReactNode
   className?: string
-  gap?: number
-  pinTop?: number
 }
 
-type InjectedCardProps = {
-  index: number
-  count: number
-  scrollYProgress: MotionValue<number>
-  motionRange: number
-  pinTop: number
-}
+export function StackingCards({ children, className }: StackingCardsProps) {
+  const container = useRef<HTMLDivElement>(null)
+  const cardsContainer = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
-export function StackingCards({
-  children,
-  className,
-  gap = 24,
-  pinTop = 24,
-}: StackingCardsProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const stackRef = useRef<HTMLDivElement>(null)
-  const [reducedMotion, setReducedMotion] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  useGSAP(
+    () => {
+      const cards = cardRefs.current
+      const totalCards = cards.length
+      if (totalCards === 0) return
+
+      gsap.set(cards.slice(1), { y: "100%" })
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: container.current,
+          start: "top top",
+          end: `+=${window.innerHeight * (totalCards - 1)}`,
+          pin: true,
+          scrub: 0.5,
+          pinSpacing: true,
+        },
+      })
+
+      for (let i = 0; i < totalCards - 1; i++) {
+        const current = cards[i]
+        const next = cards[i + 1]
+        if (!current || !next) continue
+
+        tl.to(
+          current,
+          { scale: 0.7, rotation: 3, duration: 1, ease: "none" },
+          i,
+        )
+        tl.to(next, { y: "0%", duration: 1, ease: "none" }, i)
+      }
+    },
+    { scope: container },
   )
-  const [isMobile, setIsMobile] = useState(
-    () => window.matchMedia("(max-width: 639px)").matches,
-  )
-  const [cardHeights, setCardHeights] = useState<number[]>([])
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches)
-    mq.addEventListener("change", handler)
-    return () => mq.removeEventListener("change", handler)
-  }, [])
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)")
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener("change", handler)
-    return () => mq.removeEventListener("change", handler)
-  }, [])
-
-  useLayoutEffect(() => {
-    if (!stackRef.current) return
-    const cards = stackRef.current.children
-    const heights = Array.from(cards).map((el) => el.scrollHeight)
-    setCardHeights(heights)
-  }, [children])
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  })
-
-  const count = Children.count(children)
-
-  if (reducedMotion || isMobile) {
-    return (
-      <div ref={stackRef} className={cn("flex flex-col", className)} style={{ gap }}>
-        {children}
-      </div>
-    )
-  }
-
-  const totalRunway =
-    cardHeights.reduce((sum, h) => sum + h + gap, gap) + (cardHeights[0] || 2000)
 
   return (
-    <div className={cn("relative", className)}>
+    <div ref={container} className={cn("relative", className)}>
       <div
-        ref={containerRef}
-        className="relative"
-        style={{ height: totalRunway }}
+        ref={cardsContainer}
+        className="relative h-[90vh] w-full overflow-hidden"
       >
-        <div ref={stackRef} className="sticky" style={{ top: pinTop }}>
-          {Children.map(children, (child, i) => {
-            const cardHeight = cardHeights[i] || 400
-            const motionRange = cardHeight + gap
-
-            if (isValidElement(child)) {
-              return cloneElement<InjectedCardProps>(child, {
-                index: i,
-                count,
-                scrollYProgress,
-                motionRange,
-                pinTop,
-              })
-            }
-            return child
-          })}
-        </div>
+        {Children.map(children, (child, i) => (
+          <div
+            key={i}
+            ref={(el) => { cardRefs.current[i] = el }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="h-full w-full">{child}</div>
+          </div>
+        ))}
       </div>
     </div>
-  )
-}
-
-type StackingCardProps = {
-  children: ReactNode
-  className?: string
-  index?: number
-  count?: number
-  scrollYProgress?: MotionValue<number>
-  motionRange?: number
-  pinTop?: number
-}
-
-export function StackingCard({
-  children,
-  className,
-  index = 0,
-  count = 1,
-  scrollYProgress,
-  motionRange = 0,
-  pinTop = 24,
-}: StackingCardProps) {
-  const isFirst = index === 0
-  const isLast = index === count - 1
-
-  const fallbackProgress = useScroll({}).scrollYProgress
-  const progress = scrollYProgress ?? fallbackProgress
-
-  const start = index / count
-  const end = (index + 1) / count
-
-  const y = useTransform(progress, [start, end], [0, isFirst ? 0 : -motionRange])
-
-  const zIndex = count - index
-
-  return (
-    <motion.div
-      className={cn("relative", className)}
-      style={{
-        position: !isLast ? "sticky" : undefined,
-        top: isFirst ? pinTop : 0,
-        zIndex,
-        y: isFirst ? 0 : y,
-      }}
-    >
-      {children}
-    </motion.div>
   )
 }
