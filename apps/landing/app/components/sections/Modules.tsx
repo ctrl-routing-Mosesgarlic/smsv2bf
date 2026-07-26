@@ -1,143 +1,42 @@
-import { Check } from "@phosphor-icons/react/dist/ssr";
-import SectionWrapper from "../SectionWrapper";
+"use client"
 
-const modules = [
+import SectionWrapper from "../SectionWrapper"
+import Button from "../Button"
+
+const moduleGroups = [
   {
-    title: "Academic",
-    features: [
-      "Academic year & term management",
-      "Timetable generation",
-      "Grade & stream setup",
-      "Venue management",
-    ],
+    id: 1,
+    category: "Manage your entire academic calendar and curriculum",
+    description:
+      "Manage academic years, terms, grade levels, CBC-aligned curricula, competency assessments, and daily attendance tracking.",
+    image: "https://framerusercontent.com/images/MX3HNqrEJ01i4kqgdVnDkeXOVI.png?scale-down-to=1024&width=2216&height=1896",
+    modules: ["Academic", "Curriculum", "Assessment", "Attendance"],
   },
   {
-    title: "Curriculum",
-    features: [
-      "CBC learning areas",
-      "Strand & sub-strand mapping",
-      "Learning outcomes per grade",
-      "Curriculum browser for teachers",
-    ],
+    id: 2,
+    category: "Handle admissions, staff, and parent communication",
+    description:
+      "Handle student admissions, staff onboarding, learning area assignments, performance appraisals, and parent-teacher communication.",
+    image: "https://framerusercontent.com/images/LVggzU8ChBFPgvtXEilJdK23PY.png?scale-down-to=1024&width=1108&height=948",
+    modules: ["Students", "Staff", "Communication"],
   },
   {
-    title: "Students",
-    features: [
-      "Student admission (individual & bulk)",
-      "Enrollment & transfer tracking",
-      "Student profiles with health records",
-      "NEMIS integration",
-    ],
+    id: 3,
+    category: "Streamline all finance and school operations",
+    description:
+      "Manage fee structures, M-Pesa payments, multi-category inventory, transport routes, and hostel boarding operations.",
+    image: "https://framerusercontent.com/images/wiPH8LAYQR3ffg2hsJKuBoFS9wY.png?scale-down-to=1024&width=2216&height=1896",
+    modules: ["Finance", "Inventory", "Transport", "Hostel"],
   },
   {
-    title: "Staff",
-    features: [
-      "Staff onboarding",
-      "Learning area assignment",
-      "Performance appraisals",
-      "Leave management",
-    ],
+    id: 4,
+    category: "Stay compliant and generate powerful reports",
+    description:
+      "Track library catalogues, co-curricular activities, ODPC compliance, and generate executive dashboards with NEMIS exports.",
+    image: "https://framerusercontent.com/images/SMhyQZ0ZUQl7exxlOZUZtihso.png?scale-down-to=512&width=1284&height=1152",
+    modules: ["Library", "Activities", "Compliance", "Reports"],
   },
-  {
-    title: "Assessment",
-    features: [
-      "Formative & summative assessments",
-      "Competency-based rubrics",
-      "Result entry & approval",
-      "Report card generation",
-    ],
-  },
-  {
-    title: "Attendance",
-    features: [
-      "Daily class attendance",
-      "Bulk attendance entry",
-      "Attendance reports",
-      "Hostel roll call",
-    ],
-  },
-  {
-    title: "Finance",
-    features: [
-      "Fee structure management",
-      "M-Pesa payment integration",
-      "Receipt generation",
-      "Fee waivers & reports",
-    ],
-  },
-  {
-    title: "Communication",
-    features: [
-      "Bulk SMS via Africa's Talking",
-      "School announcements",
-      "Push notifications",
-      "Parent messaging",
-    ],
-  },
-  {
-    title: "Library",
-    features: [
-      "Book catalog management",
-      "Borrowing & returns",
-      "Fine tracking",
-      "Library usage reports",
-    ],
-  },
-  {
-    title: "Inventory",
-    features: [
-      "Multi-category inventory",
-      "Stock in/out tracking",
-      "Low-stock alerts",
-      "Asset assignment",
-    ],
-  },
-  {
-    title: "Transport",
-    features: [
-      "Route management",
-      "Vehicle tracking",
-      "Driver assignment",
-      "Student pickup tracking",
-    ],
-  },
-  {
-    title: "Hostel",
-    features: [
-      "Hostel & room management",
-      "Bed allocation",
-      "Hostel attendance",
-      "Maintenance requests",
-    ],
-  },
-  {
-    title: "Activities",
-    features: [
-      "Club & activity management",
-      "Coordinator assignment",
-      "Participation tracking",
-      "Event scheduling",
-    ],
-  },
-  {
-    title: "Compliance",
-    features: [
-      "Data consent management",
-      "Breach incident logging",
-      "Audit trails",
-      "ODPC report generation",
-    ],
-  },
-  {
-    title: "Reports",
-    features: [
-      "Executive dashboards",
-      "Governance portal",
-      "NEMIS CSV/XML export",
-      "Custom report builder",
-    ],
-  },
-];
+]
 
 export default function Modules() {
   return (
@@ -146,25 +45,30 @@ export default function Modules() {
         <h2 className="text-3xl font-bold">All Modules</h2>
         <p className="mt-3 max-w-2xl text-foreground/60">
           CBC SchoolMS offers 15 integrated modules covering every aspect of
-          school management. Choose the modules that match your school&apos;s
-          needs.
+          school management.
         </p>
       </div>
-      <div className="mt-16 grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-        {modules.map((module) => (
-          <div key={module.title}>
-            <h3 className="text-sm font-semibold">{module.title}</h3>
-            <ul className="mt-3 flex flex-col gap-2">
-              {module.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2 text-sm text-foreground/60">
-                  <Check size={14} className="mt-0.5 shrink-0 text-foreground/30" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
+
+      <div className="mt-16 flex flex-col gap-8">
+        {moduleGroups.map((group) => (
+          <div key={group.id} className={`flex gap-8 bg-surface p-4 ${group.id % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+            <div className="flex w-1/2 h-fit shrink-0 items-center justify-center overflow-hidden bg-surface">
+              <img
+                src={group.image}
+                alt={group.category}
+                className="h-full w-full object-contain border-[6px] border-white"
+              />
+            </div>
+            <div className="flex w-1/2 flex-col justify-center">
+              <h3 className="font-normal" style={{ fontSize: 34, lineHeight: 1.235 }}>{group.category}</h3>
+              <p className="mt-2 text-base leading-relaxed text-foreground/60">
+                {group.description}
+              </p>
+              <Button variant="outline" className="mt-6 w-fit">Contact Sales</Button>
+            </div>
           </div>
         ))}
       </div>
     </SectionWrapper>
-  );
+  )
 }
