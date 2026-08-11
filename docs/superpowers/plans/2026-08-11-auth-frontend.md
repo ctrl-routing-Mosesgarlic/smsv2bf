@@ -42,6 +42,7 @@ apps/auth/
   components/auth/ForgotPasswordForm.tsx
   components/auth/ResetPasswordForm.tsx
   components/auth/MfaChallengeForm.tsx
+  components/auth/OAuthCallbackForm.tsx
   app/api/auth/login/route.ts
   app/api/auth/register/route.ts
   app/api/auth/otp-verify/route.ts
@@ -2299,16 +2300,24 @@ git commit -m "feat(auth): mfa challenge page and form"
 **Files:**
 - Create: `apps/auth/app/oauth/[provider]/page.tsx`
 - Create: `apps/auth/app/oauth/[provider]/callback/page.tsx`
+- Create: `apps/auth/components/auth/OAuthCallbackForm.tsx`
 
 **Behavior:**
-- `GET /oauth/[provider]` — async server component that reads `NEXT_PUBLIC_DEFAULT_TENANT_ID`, calls `POST /api/auth/oauth-redirect` with `{ provider, tenant_id }`, then `redirect(redirect_url)`. If no provider or the call fails, render an error state.
-- `GET /oauth/[provider]/callback` — async server component reading `searchParams.code` and `searchParams.tenant_id`, calling `POST /api/auth/oauth-callback`, then redirecting to the success redirect. On `mfa_required`, redirect to `/mfa-challenge?mfa_token=...`. On error, render an error state with a link back to login.
-- Both pages must `await` the `provider` param (Next 16: params is a Promise).
+- `GET /oauth/[provider]` — async **server component**. Reads `NEXT_PUBLIC_DEFAULT_TENANT_ID`, calls `proxyIdentity("/identity/oauth/redirect", ...)` directly (it is already on the server — no self-fetch, no absolute origin needed), then `redirect(redirect_url)`. On failure, render an error state with a link back to login.
+- `GET /oauth/[provider]/callback` — async **server component** that reads `searchParams.code`/`searchParams.tenant_id`, then renders a client **`OAuthCallbackForm`**. The form POSTs `{ provider, code, tenant_id }` to `/api/auth/oauth-callback` **from the browser** via `apiRequest`, so the browser receives the `Set-Cookie` headers (a server-side fetch would swallow them). Then:
+  - `200` → `window.location.assign(NEXT_PUBLIC_AUTH_SUCCESS_REDIRECT)`.
+  - `mfa_required` + `mfa_token` → `router.replace('/mfa-challenge?mfa_token=...')`.
+  - error → render error state with a link back to login.
+- Both pages must `await` the `provider` param (Next 16: params is a Promise). The provider page passes `provider`, `code`, and `tenant_id` into the form as props — the form needs no `useSearchParams`/`useParams`.
+
+> **Why client-component callback:** Next 16 only sends `Set-Cookie` to the browser on responses the browser directly receives. A server component `fetch()`-ing the oauth-callback route handler would run that handler server-to-server and the cookies would never reach the browser. Posting from the client fixes the flow.
 
 - [ ] **Step 1: Create `app/oauth/[provider]/page.tsx`**
 
 ```tsx
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { proxyIdentity } from "@/lib/api/identity";
 import { NEXT_PUBLIC_DEFAULT_TENANT_ID } from "@/lib/config/env";
 
 async function OAuthProviderPage({
@@ -2318,25 +2327,23 @@ async function OAuthProviderPage({
 }) {
   const { provider } = await params;
 
-  const response = await fetch("http://localhost:3000/api/auth/oauth-redirect", {
+  const { status, body } = await proxyIdentity("/identity/oauth/redirect", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider,
-      tenant_id: NEXT_PUBLIC_DEFAULT_TENANT_ID,
-    }),
-    cache: "no-store",
+    body: { provider, tenant_id: NEXT_PUBLIC_DEFAULT_TENANT_ID },
+    attachAccessToken: false,
+    retryOn401: false,
   });
 
-  const body = (await response.json().catch(() => ({}))) as { redirect_url?: string; message?: string };
-  if (response.ok && body.redirect_url) {
-    redirect(body.redirect_url);
+  const candidate = body as { redirect_url?: string; message?: string } | null;
+  if (status === 200 && typeof candidate?.redirect_url === "string") {
+    redirect(candidate.redirect_url);
   }
 
   return (
     <main className="container mx-auto px-4 py-16 text-center">
       <h1 className="text-lg font-semibold">Unable to start sign in</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{body.message ?? "Please try again."}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{candidate?.message ?? "Please try again."}</p>
+      <Link href="/login" className="mt-4 inline-block text-sm underline">Back to sign in</Link>
     </main>
   );
 }
@@ -2347,9 +2354,8 @@ export default OAuthProviderPage;
 - [ ] **Step 2: Create `app/oauth/[provider]/callback/page.tsx`**
 
 ```tsx
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AUTH_SUCCESS_REDIRECT } from "@/lib/config/env";
+import { OAuthCallbackForm } from "@/components/auth/OAuthCallbackForm";
 
 async function OAuthCallbackPage({
   params,
@@ -2371,33 +2377,9 @@ async function OAuthCallbackPage({
     );
   }
 
-  const response = await fetch("http://localhost:3000/api/auth/oauth-callback", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ provider, code, tenant_id }),
-    cache: "no-store",
-  });
-
-  const body = (await response.json().catch(() => ({}))) as {
-    ok?: boolean;
-    mfa_required?: boolean;
-    mfa_token?: string;
-    message?: string;
-  };
-
-  if (body.mfa_required && body.mfa_token) {
-    redirect(`/mfa-challenge?mfa_token=${encodeURIComponent(body.mfa_token)}`);
-  }
-
-  if (response.ok && body.ok) {
-    redirect(AUTH_SUCCESS_REDIRECT);
-  }
-
   return (
-    <main className="container mx-auto px-4 py-16 text-center">
-      <h1 className="text-lg font-semibold">Sign in failed</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{body.message ?? "Please try again."}</p>
-      <Link href="/login" className="mt-4 inline-block text-sm underline">Back to sign in</Link>
+    <main className="container mx-auto px-4 py-16">
+      <OAuthCallbackForm provider={provider} code={code} tenant_id={tenant_id} />
     </main>
   );
 }
@@ -2405,63 +2387,72 @@ async function OAuthCallbackPage({
 export default OAuthCallbackPage;
 ```
 
-- [ ] **Step 3: Verify**
-
-```bash
-bun run lint
-bun run build
-```
-Expected: both pass.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add -A apps/auth
-git commit -m "feat(auth): oauth provider and callback pages"
-```
-
----
-
-### Task 19: Route handlers refer to the server base URL (fix OAuth fetch host)
-
-**Files:**
-- Modify: `apps/auth/app/oauth/[provider]/page.tsx`
-- Modify: `apps/auth/app/oauth/[provider]/callback/page.tsx`
-
-**Behavior:** The OAuth pages use absolute `http://localhost:3000` in their `fetch`. Replace with a dynamic origin so it works in any environment.
-
-- [ ] **Step 1: Introduce `lib/api/origin.ts`**
-
-```ts
-import { headers } from "next/headers";
-
-export async function localOrigin(): Promise<string> {
-  const headersList = await headers();
-  const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "localhost:3000";
-  const proto = headersList.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
-```
-
-- [ ] **Step 2: Update `app/oauth/[provider]/page.tsx`**
-
-Replace the hardcoded fetch origin with:
+- [ ] **Step 3: Create `components/auth/OAuthCallbackForm.tsx`**
 
 ```tsx
-import { localOrigin } from "@/lib/api/origin";
-// ...
-const origin = await localOrigin();
-const response = await fetch(`${origin}/api/auth/oauth-redirect`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ provider, tenant_id: NEXT_PUBLIC_DEFAULT_TENANT_ID }),
-  cache: "no-store",
-});
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { apiRequest } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/errors";
+import { NEXT_PUBLIC_AUTH_SUCCESS_REDIRECT } from "@/lib/config/env";
+
+interface OAuthCallbackResponse {
+  ok: true;
+  user_id?: string;
+  mfa_required?: boolean;
+  mfa_token?: string;
+}
+
+export function OAuthCallbackForm({
+  provider,
+  code,
+  tenant_id,
+}: {
+  provider: string;
+  code: string;
+  tenant_id?: string;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<ApiError | null>(null);
+
+  const complete = useCallback(async () => {
+    try {
+      const res = await apiRequest<OAuthCallbackResponse>("/api/auth/oauth-callback", {
+        method: "POST",
+        body: { provider, code, tenant_id },
+      });
+      if (res.mfa_required && res.mfa_token) {
+        router.replace(`/mfa-challenge?mfa_token=${encodeURIComponent(res.mfa_token)}`);
+        return;
+      }
+      window.location.assign(NEXT_PUBLIC_AUTH_SUCCESS_REDIRECT);
+    } catch (e) {
+      setError(e instanceof ApiError ? e : new ApiError(0, "Unexpected error."));
+    }
+  }, [provider, code, tenant_id, router]);
+
+  useEffect(() => {
+    void complete();
+  }, [complete]);
+
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+      {error ? (
+        <>
+          <h1 className="text-lg font-semibold">Sign in failed</h1>
+          <p className="text-sm text-muted-foreground">{error.message}</p>
+          <Link href="/login" className="text-sm underline">Back to sign in</Link>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Completing sign in…</p>
+      )}
+    </div>
+  );
+}
 ```
-
-- [ ] **Step 3: Update `app/oauth/[provider]/callback/page.tsx`**
-
-Replace the hardcoded fetch origin with `localOrigin()` (same pattern as Step 2, endpoint `/api/auth/oauth-callback`).
 
 - [ ] **Step 4: Verify**
 
@@ -2475,7 +2466,7 @@ Expected: both pass.
 
 ```bash
 git add -A apps/auth
-git commit -m "fix(auth): resolve oauth proxy origin from request headers"
+git commit -m "feat(auth): oauth provider and client callback pages"
 ```
 
 ---
