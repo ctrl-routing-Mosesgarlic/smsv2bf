@@ -16,7 +16,13 @@ async function LoginPage({
   const params = await searchParams;
   const next = params.next;
   const returnTo =
-    typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
+    typeof next === "string" &&
+    next.startsWith("/") &&
+    !next.startsWith("//") &&
+    !next.includes("\\") &&
+    !next.includes("%5c")
+      ? next
+      : undefined;
 
   return (
     <main className="container mx-auto">
