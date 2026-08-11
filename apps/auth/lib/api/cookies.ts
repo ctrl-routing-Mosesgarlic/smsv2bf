@@ -48,5 +48,8 @@ export async function clearAuthCookies(): Promise<void> {
   const store = await cookies();
   store.delete(COOKIE_NAMES.access);
   store.delete(COOKIE_NAMES.refresh);
-  store.delete(COOKIE_NAMES.session);
+  store.delete({
+    name: COOKIE_NAMES.session,
+    ...(SESSION_COOKIE_DOMAIN ? { domain: SESSION_COOKIE_DOMAIN } : {}),
+  });
 }
