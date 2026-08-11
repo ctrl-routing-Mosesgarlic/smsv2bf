@@ -35,7 +35,13 @@ async function tryRefresh(): Promise<boolean> {
     return false;
   }
 
-  const body: unknown = await response.json();
+  const text = await response.text();
+  let body: unknown = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = text;
+  }
   if (!isTokenResponse(body)) {
     await clearAuthCookies();
     return false;
