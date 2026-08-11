@@ -28,13 +28,13 @@ export const otpSchema = z.object({
 export type OtpInput = z.infer<typeof otpSchema>;
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().max(255),
 });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 export const resetPasswordSchema = z
   .object({
-    email: z.string().email(),
+    email: z.string().email().max(255),
     otp: z.string().regex(/^\d{6}$/, "Code must be exactly 6 digits."),
     password: z.string().min(8),
     password_confirmation: z.string().min(1),
