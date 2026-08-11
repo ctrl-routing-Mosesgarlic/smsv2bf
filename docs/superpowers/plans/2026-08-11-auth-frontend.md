@@ -42,6 +42,7 @@ apps/auth/
   components/auth/ForgotPasswordForm.tsx
   components/auth/ResetPasswordForm.tsx
   components/auth/MfaChallengeForm.tsx
+  components/auth/OAuthButtons.tsx
   components/auth/OAuthCallbackForm.tsx
   app/api/auth/login/route.ts
   app/api/auth/register/route.ts
@@ -60,7 +61,6 @@ apps/auth/
   app/forgot-password/page.tsx
   app/reset-password/page.tsx
   app/mfa-challenge/page.tsx
-  app/oauth/[provider]/page.tsx
   app/oauth/[provider]/callback/page.tsx
 ```
 
@@ -1047,8 +1047,8 @@ git commit -m "feat(auth): otp, forgot-password, reset-password route handlers"
 - Consumes: `proxyIdentity`, cookie helpers, guards, `parseErrorResponse`, schemas.
 - Produces:
   - `POST /api/auth/mfa-challenge` body `{ mfa_token, code, device_label? }` → `200` `{ ok: true, user_id }` with auth cookies set; `422`/`401` on failure.
-  - `POST /api/auth/oauth-redirect` body `{ provider, tenant_id? }` → `200` `{ redirect_url }`.
-  - `POST /api/auth/oauth-callback` body `{ provider, code, tenant_id? }` →
+  - `POST /api/auth/oauth-redirect` body `{ provider }` → `200` `{ url }`. Proxies backend `GET /identity/oauth/{provider}/redirect?tenant_id=<NEXT_PUBLIC_DEFAULT_TENANT_ID>`.
+  - `POST /api/auth/oauth-callback` body `{ provider, code, state }` → proxies backend `GET /identity/oauth/{provider}/callback?code=...&state=...`:
     - `200` `{ ok: true, user_id }` with auth cookies set
     - `202` `{ ok: true, mfa_required: true, mfa_token }`
     - `422`/`400` on failure
@@ -1106,10 +1106,10 @@ import { NextResponse } from "next/server";
 import { proxyIdentity } from "@/lib/api/identity";
 import { parseErrorResponse } from "@/lib/api/errors";
 import { z } from "zod";
+import { NEXT_PUBLIC_DEFAULT_TENANT_ID } from "@/lib/config/env";
 
 const oauthRedirectSchema = z.object({
-  provider: z.string().min(1),
-  tenant_id: z.string().optional(),
+  provider: z.enum(["google", "microsoft"]),
 });
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -1128,16 +1128,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const { status, body } = await proxyIdentity("/identity/oauth/redirect", {
-    method: "POST",
-    body: parsed.data,
-    attachAccessToken: false,
-    retryOn401: false,
-  });
+  if (!NEXT_PUBLIC_DEFAULT_TENANT_ID) {
+    return NextResponse.json(
+      { error: "invalid_config", message: "NEXT_PUBLIC_DEFAULT_TENANT_ID is not configured." },
+      { status: 500 }
+    );
+  }
 
-  const candidate = body as { redirect_url?: string } | null;
-  if (status === 200 && typeof candidate?.redirect_url === "string") {
-    return NextResponse.json({ redirect_url: candidate.redirect_url }, { status: 200 });
+  const { provider } = parsed.data;
+  const tenantId = encodeURIComponent(NEXT_PUBLIC_DEFAULT_TENANT_ID);
+  const { status, body } = await proxyIdentity(
+    `/identity/oauth/${provider}/redirect?tenant_id=${tenantId}`,
+    { method: "GET", attachAccessToken: false, retryOn401: false }
+  );
+
+  const candidate = body as { url?: string; message?: string } | null;
+  if (status === 200 && typeof candidate?.url === "string") {
+    return NextResponse.json({ url: candidate.url }, { status: 200 });
   }
 
   const error = parseErrorResponse(status, body);
@@ -1151,14 +1158,14 @@ export async function POST(request: Request): Promise<NextResponse> {
 import { NextResponse } from "next/server";
 import { proxyIdentity } from "@/lib/api/identity";
 import { setAuthCookies, clearAuthCookies } from "@/lib/api/cookies";
-import { isTokenResponse, isMfaRequired } from "@/lib/api/guards";
+import { isTokenResponse } from "@/lib/api/guards";
 import { parseErrorResponse } from "@/lib/api/errors";
 import { z } from "zod";
 
 const oauthCallbackSchema = z.object({
-  provider: z.string().min(1),
+  provider: z.enum(["google", "microsoft"]),
   code: z.string().min(1),
-  tenant_id: z.string().optional(),
+  state: z.string().min(1),
 });
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -1177,15 +1184,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const { status, body } = await proxyIdentity("/identity/oauth/callback", {
-    method: "POST",
-    body: parsed.data,
-    attachAccessToken: false,
-    retryOn401: false,
-  });
+  const { provider, code, state } = parsed.data;
+  const query = `code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+  const { status, body } = await proxyIdentity(
+    `/identity/oauth/${provider}/callback?${query}`,
+    { method: "GET", attachAccessToken: false, retryOn401: false }
+  );
 
-  if (isMfaRequired(body)) {
-    return NextResponse.json({ ok: true, mfa_required: true, mfa_token: body.mfa_token }, { status: 202 });
+  const candidate = body as { mfa_token?: string } | null;
+  if (status === 401 && typeof candidate?.mfa_token === "string") {
+    return NextResponse.json(
+      { ok: true, mfa_required: true, mfa_token: candidate.mfa_token },
+      { status: 202 }
+    );
   }
 
   if (status === 200 && isTokenResponse(body)) {
@@ -2305,63 +2316,123 @@ git commit -m "feat(auth): mfa challenge page and form"
 
 ---
 
-### Task 18: OAuth pages
+### Task 18: OAuth — provider buttons + callback
 
 **Files:**
-- Create: `apps/auth/app/oauth/[provider]/page.tsx`
+- Create: `apps/auth/components/auth/OAuthButtons.tsx`
 - Create: `apps/auth/app/oauth/[provider]/callback/page.tsx`
 - Create: `apps/auth/components/auth/OAuthCallbackForm.tsx`
+- Edit: `apps/auth/components/auth/LoginForm.tsx`, `apps/auth/components/auth/RegisterForm.tsx` (render `OAuthButtons`)
+- Edit: `apps/auth/next.config.ts` (add `img.logo.dev` to `images.remotePatterns`)
+- Delete: `apps/auth/app/oauth/[provider]/page.tsx`
+
+**Backend contract (auth.md §4.15/§4.16):**
+- `GET /identity/oauth/{provider}/redirect?tenant_id=<uuid>` → `200 { url }` (provider's authorize URL), providers `google` | `microsoft`, `403` when not enabled.
+- `GET /identity/oauth/{provider}/callback?code=...&state=<json>` → `200 { data: { tokens... } }`; `401 { error, mfa_token }` means MFA required; other statuses are errors.
+- `state` is a JSON string (`{"tenant_id": "..."}`) the provider returns; the frontend forwards it **as-is**.
 
 **Behavior:**
-- `GET /oauth/[provider]` — async **server component**. Reads `NEXT_PUBLIC_DEFAULT_TENANT_ID`, calls `proxyIdentity("/identity/oauth/redirect", ...)` directly (it is already on the server — no self-fetch, no absolute origin needed), then `redirect(redirect_url)`. On failure, render an error state with a link back to login.
-- `GET /oauth/[provider]/callback` — async **server component** that reads `searchParams.code`/`searchParams.tenant_id`, then renders a client **`OAuthCallbackForm`**. The form POSTs `{ provider, code, tenant_id }` to `/api/auth/oauth-callback` **from the browser** via `apiRequest`, so the browser receives the `Set-Cookie` headers (a server-side fetch would swallow them). Then:
+- Sign-in and sign-up forms each render a row of OAuth provider buttons (Google, Microsoft) with logo.dev icons. Clicking a button POSTs `{ provider }` to `/api/auth/oauth-redirect`, then `window.location.assign(url)`.
+- `GET /oauth/[provider]/callback` — async **server component** that reads `searchParams.code` / `searchParams.state`, then renders a client **`OAuthCallbackForm`**. The form POSTs `{ provider, code, state }` to `/api/auth/oauth-callback` **from the browser** via `apiRequest`, so the browser receives the `Set-Cookie` headers (a server-side fetch would swallow them). Then:
   - `200` → `window.location.assign(NEXT_PUBLIC_AUTH_SUCCESS_REDIRECT)`.
   - `mfa_required` + `mfa_token` → `router.replace('/mfa-challenge?mfa_token=...')`.
   - error → render error state with a link back to login.
-- Both pages must `await` the `provider` param (Next 16: params is a Promise). The provider page passes `provider`, `code`, and `tenant_id` into the form as props — the form needs no `useSearchParams`/`useParams`.
+- Both pages must `await` the `provider` param (Next 16: params is a Promise). The callback page passes `provider`, `code`, and `state` into the form as props — the form needs no `useSearchParams`/`useParams`.
+- There is **no** `/oauth/[provider]` landing page: the buttons live directly on the sign-in/sign-up forms.
 
 > **Why client-component callback:** Next 16 only sends `Set-Cookie` to the browser on responses the browser directly receives. A server component `fetch()`-ing the oauth-callback route handler would run that handler server-to-server and the cookies would never reach the browser. Posting from the client fixes the flow.
 
-- [ ] **Step 1: Create `app/oauth/[provider]/page.tsx`**
+> **Why `/api/auth/oauth-redirect`:** the backend redirect endpoint is a `GET` returning `{ url }`, but the browser button needs the provider's authorize URL as JSON to navigate to. The route handler proxies that GET (adding `tenant_id` from `NEXT_PUBLIC_DEFAULT_TENANT_ID`) and returns `{ url }`.
+
+- [ ] **Step 1: Create `components/auth/OAuthButtons.tsx`**
 
 ```tsx
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { proxyIdentity } from "@/lib/api/identity";
-import { NEXT_PUBLIC_DEFAULT_TENANT_ID } from "@/lib/config/env";
+"use client";
 
-async function OAuthProviderPage({
-  params,
-}: {
-  params: Promise<{ provider: string }>;
-}) {
-  const { provider } = await params;
+import { useState } from "react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ErrorAlert } from "./shared";
+import { apiRequest } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/errors";
 
-  const { status, body } = await proxyIdentity("/identity/oauth/redirect", {
-    method: "POST",
-    body: { provider, tenant_id: NEXT_PUBLIC_DEFAULT_TENANT_ID },
-    attachAccessToken: false,
-    retryOn401: false,
-  });
-
-  const candidate = body as { redirect_url?: string; message?: string } | null;
-  if (status === 200 && typeof candidate?.redirect_url === "string") {
-    redirect(candidate.redirect_url);
-  }
-
-  return (
-    <main className="container mx-auto px-4 py-16 text-center">
-      <h1 className="text-lg font-semibold">Unable to start sign in</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{candidate?.message ?? "Please try again."}</p>
-      <Link href="/login" className="mt-4 inline-block text-sm underline">Back to sign in</Link>
-    </main>
-  );
+interface OAuthRedirectResponse {
+  url: string;
 }
 
-export default OAuthProviderPage;
+const PROVIDERS = [
+  {
+    id: "google",
+    label: "Google",
+    icon: "https://img.logo.dev/google.com?token=pk_LqNDeLVVSgGaJvSw8he-Tw&format=webp&retina=true",
+  },
+  {
+    id: "microsoft",
+    label: "Microsoft",
+    icon: "https://img.logo.dev/microsoft.com?token=pk_LqNDeLVVSgGaJvSw8he-Tw&format=webp&retina=true",
+  },
+] as const;
+
+export function OAuthButtons() {
+  const [error, setError] = useState<ApiError | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
+
+  const start = async (provider: string) => {
+    setPending(provider);
+    setError(null);
+    try {
+      const res = await apiRequest<OAuthRedirectResponse>("/api/auth/oauth-redirect", {
+        method: "POST",
+        body: { provider },
+      });
+      window.location.assign(res.url);
+    } catch (e) {
+      setError(e instanceof ApiError ? e : new ApiError(0, "Unexpected error."));
+      setPending(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">or continue with</span>
+        </div>
+      </div>
+      <ErrorAlert error={error} />
+      <div className="grid grid-cols-2 gap-3">
+        {PROVIDERS.map((p) => (
+          <Button
+            key={p.id}
+            type="button"
+            variant="outline"
+            disabled={pending !== null}
+            onClick={() => start(p.id)}
+          >
+            {pending === p.id ? (
+              "Redirecting…"
+            ) : (
+              <>
+                <Image src={p.icon} alt="" width={16} height={16} unoptimized />
+                {p.label}
+              </>
+            )}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
 ```
 
-- [ ] **Step 2: Create `app/oauth/[provider]/callback/page.tsx`**
+- [ ] **Step 2: Render `<OAuthButtons />` after the submit button in `LoginForm.tsx` and `RegisterForm.tsx`.**
+
+- [ ] **Step 3: Add `img.logo.dev` to `next.config.ts` `images.remotePatterns`.**
+
+- [ ] **Step 4: Create `app/oauth/[provider]/callback/page.tsx`**
 
 ```tsx
 import Link from "next/link";
@@ -2372,16 +2443,16 @@ async function OAuthCallbackPage({
   searchParams,
 }: {
   params: Promise<{ provider: string }>;
-  searchParams: Promise<{ code?: string; state?: string; tenant_id?: string }>;
+  searchParams: Promise<{ code?: string; state?: string }>;
 }) {
   const { provider } = await params;
-  const { code, tenant_id } = await searchParams;
+  const { code, state } = await searchParams;
 
-  if (!code) {
+  if (!code || !state) {
     return (
       <main className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-lg font-semibold">Sign in failed</h1>
-        <p className="mt-2 text-sm text-muted-foreground">No authorization code was returned.</p>
+        <p className="mt-2 text-sm text-muted-foreground">The authorization response was incomplete.</p>
         <Link href="/login" className="mt-4 inline-block text-sm underline">Back to sign in</Link>
       </main>
     );
@@ -2389,7 +2460,7 @@ async function OAuthCallbackPage({
 
   return (
     <main className="container mx-auto px-4 py-16">
-      <OAuthCallbackForm provider={provider} code={code} tenant_id={tenant_id} />
+      <OAuthCallbackForm provider={provider} code={code} state={state} />
     </main>
   );
 }
@@ -2397,7 +2468,7 @@ async function OAuthCallbackPage({
 export default OAuthCallbackPage;
 ```
 
-- [ ] **Step 3: Create `components/auth/OAuthCallbackForm.tsx`**
+- [ ] **Step 5: Create `components/auth/OAuthCallbackForm.tsx`**
 
 ```tsx
 "use client";
@@ -2419,11 +2490,11 @@ interface OAuthCallbackResponse {
 export function OAuthCallbackForm({
   provider,
   code,
-  tenant_id,
+  state,
 }: {
   provider: string;
   code: string;
-  tenant_id?: string;
+  state: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<ApiError | null>(null);
@@ -2432,7 +2503,7 @@ export function OAuthCallbackForm({
     try {
       const res = await apiRequest<OAuthCallbackResponse>("/api/auth/oauth-callback", {
         method: "POST",
-        body: { provider, code, tenant_id },
+        body: { provider, code, state },
       });
       if (res.mfa_required && res.mfa_token) {
         router.replace(`/mfa-challenge?mfa_token=${encodeURIComponent(res.mfa_token)}`);
@@ -2442,10 +2513,13 @@ export function OAuthCallbackForm({
     } catch (e) {
       setError(e instanceof ApiError ? e : new ApiError(0, "Unexpected error."));
     }
-  }, [provider, code, tenant_id, router]);
+  }, [provider, code, state, router]);
 
   useEffect(() => {
-    void complete();
+    const run = async () => {
+      await complete();
+    };
+    void run();
   }, [complete]);
 
   return (
@@ -2464,7 +2538,9 @@ export function OAuthCallbackForm({
 }
 ```
 
-- [ ] **Step 4: Verify**
+- [ ] **Step 6: Delete `app/oauth/[provider]/page.tsx`.**
+
+- [ ] **Step 7: Verify**
 
 ```bash
 bun run lint
@@ -2472,11 +2548,11 @@ bun run build
 ```
 Expected: both pass.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A apps/auth
-git commit -m "feat(auth): oauth provider and client callback pages"
+git commit -m "feat(auth): oauth buttons and callback page"
 ```
 
 ---

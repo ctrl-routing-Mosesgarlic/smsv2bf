@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { proxyIdentity } from "@/lib/api/identity";
 import { setAuthCookies, clearAuthCookies } from "@/lib/api/cookies";
-import { isTokenResponse, isMfaRequired } from "@/lib/api/guards";
+import { isTokenResponse } from "@/lib/api/guards";
 import { parseErrorResponse } from "@/lib/api/errors";
 import { z } from "zod";
 
 const oauthCallbackSchema = z.object({
-  provider: z.string().min(1),
+  provider: z.enum(["google", "microsoft"]),
   code: z.string().min(1),
-  tenant_id: z.string().optional(),
+  state: z.string().min(1),
 });
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -27,15 +27,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const { status, body } = await proxyIdentity("/identity/oauth/callback", {
-    method: "POST",
-    body: parsed.data,
-    attachAccessToken: false,
-    retryOn401: false,
-  });
+  const { provider, code, state } = parsed.data;
+  const query = `code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+  const { status, body } = await proxyIdentity(
+    `/identity/oauth/${provider}/callback?${query}`,
+    { method: "GET", attachAccessToken: false, retryOn401: false }
+  );
 
-  if (isMfaRequired(body)) {
-    return NextResponse.json({ ok: true, mfa_required: true, mfa_token: body.mfa_token }, { status: 202 });
+  const candidate = body as { mfa_token?: string } | null;
+  if (status === 401 && typeof candidate?.mfa_token === "string") {
+    return NextResponse.json(
+      { ok: true, mfa_required: true, mfa_token: candidate.mfa_token },
+      { status: 202 }
+    );
   }
 
   if (status === 200 && isTokenResponse(body)) {

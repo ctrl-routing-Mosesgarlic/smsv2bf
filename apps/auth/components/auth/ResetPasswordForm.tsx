@@ -20,9 +20,10 @@ export function ResetPasswordForm({ email, otp }: { email: string; otp: string }
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
+    mode: "onChange",
     defaultValues: { email, otp, password: "", password_confirmation: "" },
   });
 
@@ -58,7 +59,7 @@ export function ResetPasswordForm({ email, otp }: { email: string; otp: string }
         </div>
         <PasswordInput id="password" label="New password" error={errors.password?.message} {...register("password")} />
         <PasswordInput id="password_confirmation" label="Confirm new password" error={errors.password_confirmation?.message} {...register("password_confirmation")} />
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button type="submit" className="w-full" disabled={!isValid || submitting}>
           {submitting ? "Resetting…" : "Reset password"}
         </Button>
       </form>

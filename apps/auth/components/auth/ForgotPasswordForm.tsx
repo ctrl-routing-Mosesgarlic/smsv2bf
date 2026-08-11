@@ -22,9 +22,10 @@ export function ForgotPasswordForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onChange",
     defaultValues: { email: "" },
   });
 
@@ -63,7 +64,7 @@ export function ForgotPasswordForm() {
             <Input id="email" type="email" {...register("email")} aria-invalid={!!errors.email} />
             {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
           </div>
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button type="submit" className="w-full" disabled={!isValid || submitting}>
             {submitting ? "Sending…" : "Send reset code"}
           </Button>
         </form>

@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { proxyIdentity } from "@/lib/api/identity";
 import { parseErrorResponse } from "@/lib/api/errors";
 import { z } from "zod";
+import { NEXT_PUBLIC_DEFAULT_TENANT_ID } from "@/lib/config/env";
 
 const oauthRedirectSchema = z.object({
-  provider: z.string().min(1),
-  tenant_id: z.string().optional(),
+  provider: z.enum(["google", "microsoft"]),
 });
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -24,16 +24,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const { status, body } = await proxyIdentity("/identity/oauth/redirect", {
-    method: "POST",
-    body: parsed.data,
-    attachAccessToken: false,
-    retryOn401: false,
-  });
+  if (!NEXT_PUBLIC_DEFAULT_TENANT_ID) {
+    return NextResponse.json(
+      { error: "invalid_config", message: "NEXT_PUBLIC_DEFAULT_TENANT_ID is not configured." },
+      { status: 500 }
+    );
+  }
 
-  const candidate = body as { redirect_url?: string } | null;
-  if (status === 200 && typeof candidate?.redirect_url === "string") {
-    return NextResponse.json({ redirect_url: candidate.redirect_url }, { status: 200 });
+  const { provider } = parsed.data;
+  const tenantId = encodeURIComponent(NEXT_PUBLIC_DEFAULT_TENANT_ID);
+  const { status, body } = await proxyIdentity(
+    `/identity/oauth/${provider}/redirect?tenant_id=${tenantId}`,
+    { method: "GET", attachAccessToken: false, retryOn401: false }
+  );
+
+  const candidate = body as { url?: string; message?: string } | null;
+  if (status === 200 && typeof candidate?.url === "string") {
+    return NextResponse.json({ url: candidate.url }, { status: 200 });
   }
 
   const error = parseErrorResponse(status, body);

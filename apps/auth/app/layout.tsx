@@ -24,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn("h-full", "antialiased", outfit.variable, inter.variable, "font-mono", jetbrainsMono.variable)}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col items-center justify-center">{children}</body>
     </html>
   );
 }

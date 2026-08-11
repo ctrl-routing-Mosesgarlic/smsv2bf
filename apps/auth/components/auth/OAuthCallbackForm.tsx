@@ -17,11 +17,11 @@ interface OAuthCallbackResponse {
 export function OAuthCallbackForm({
   provider,
   code,
-  tenant_id,
+  state,
 }: {
   provider: string;
   code: string;
-  tenant_id?: string;
+  state: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<ApiError | null>(null);
@@ -30,7 +30,7 @@ export function OAuthCallbackForm({
     try {
       const res = await apiRequest<OAuthCallbackResponse>("/api/auth/oauth-callback", {
         method: "POST",
-        body: { provider, code, tenant_id },
+        body: { provider, code, state },
       });
       if (res.mfa_required && res.mfa_token) {
         router.replace(`/mfa-challenge?mfa_token=${encodeURIComponent(res.mfa_token)}`);
@@ -40,7 +40,7 @@ export function OAuthCallbackForm({
     } catch (e) {
       setError(e instanceof ApiError ? e : new ApiError(0, "Unexpected error."));
     }
-  }, [provider, code, tenant_id, router]);
+  }, [provider, code, state, router]);
 
   useEffect(() => {
     const run = async () => {

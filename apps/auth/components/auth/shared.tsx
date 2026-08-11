@@ -2,6 +2,7 @@
 
 import { forwardRef, useState } from "react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -45,7 +46,7 @@ export function AuthCardShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center px-4">
+    <div className="flex w-full items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
@@ -66,10 +67,25 @@ export const PasswordInput = forwardRef<
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input ref={ref} id={id} type={visible ? "text" : "password"} aria-invalid={!!error} {...props} />
-      <button type="button" onClick={() => setVisible((v) => !v)} className="text-xs underline">
-        {visible ? "Hide" : "Show"}
-      </button>
+      <div className="relative">
+        <Input
+          ref={ref}
+          id={id}
+          type={visible ? "text" : "password"}
+          aria-invalid={!!error}
+          className="pr-9"
+          {...props}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+          className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );

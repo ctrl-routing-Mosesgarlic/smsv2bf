@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthCardShell, ErrorAlert, PasswordInput } from "./shared";
+import { OAuthButtons } from "./OAuthButtons";
 import { loginSchema, type LoginInput } from "@/lib/schemas";
 import { apiRequest } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
@@ -29,9 +30,10 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
+    mode: "onChange",
     defaultValues: { identifier: "", password: "" },
   });
 
@@ -61,24 +63,27 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
       title="Sign in"
       description="Enter your email or phone and password."
       footer={
-        <div className="space-y-1">
+        <div className="flex items-center justify-between">
           <Link href="/forgot-password" className="hover:underline">Forgot password?</Link>
           <div>No account? <Link href="/register" className="hover:underline">Register</Link></div>
         </div>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <ErrorAlert error={error} />
-        <div className="space-y-2">
-          <Label htmlFor="identifier">Email or phone</Label>
-          <Input id="identifier" {...register("identifier")} aria-invalid={!!errors.identifier} />
-          {errors.identifier ? <p className="text-xs text-destructive">{errors.identifier.message}</p> : null}
-        </div>
-        <PasswordInput id="password" label="Password" error={errors.password?.message} {...register("password")} />
-        <Button type="submit" className="w-full" disabled={submitting}>
+      <div className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <ErrorAlert error={error} />
+          <div className="space-y-2">
+            <Label htmlFor="identifier">Email or phone</Label>
+            <Input id="identifier" {...register("identifier")} aria-invalid={!!errors.identifier} />
+            {errors.identifier ? <p className="text-xs text-destructive">{errors.identifier.message}</p> : null}
+          </div>
+          <PasswordInput id="password" label="Password" error={errors.password?.message} {...register("password")} />
+<Button type="submit" className="w-full" disabled={!isValid || submitting}>
           {submitting ? "Signing in…" : "Sign in"}
-        </Button>
-      </form>
+          </Button>
+        </form>
+        <OAuthButtons />
+      </div>
     </AuthCardShell>
   );
 }

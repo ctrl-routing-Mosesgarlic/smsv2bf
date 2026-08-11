@@ -38,9 +38,10 @@ export function OtpVerifyForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<OtpInput>({
     resolver: zodResolver(otpSchema),
+    mode: "onChange",
     defaultValues: { code: "", purpose },
   });
 
@@ -101,7 +102,7 @@ export function OtpVerifyForm({
           <Input id="code" inputMode="numeric" maxLength={6} placeholder="000000" {...register("code")} aria-invalid={!!errors.code} />
           {errors.code ? <p className="text-xs text-destructive">{errors.code.message}</p> : null}
         </div>
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button type="submit" className="w-full" disabled={!isValid || submitting}>
           {submitting ? "Verifying…" : "Verify"}
         </Button>
         <Button type="button" variant="ghost" className="w-full" onClick={onResend} disabled={countdown > 0 || resending}>

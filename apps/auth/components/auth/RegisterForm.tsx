@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthCardShell, ErrorAlert, PasswordInput } from "./shared";
+import { OAuthButtons } from "./OAuthButtons";
 import { registerSchema, type RegisterInput } from "@/lib/schemas";
 import { apiRequest } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
@@ -29,9 +30,10 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: { full_name: "", phone: "", email: "", password: "", password_confirmation: "" },
   });
 
@@ -57,29 +59,32 @@ export function RegisterForm() {
       title="Create account"
       footer={<div>Already have an account? <Link href="/login" className="hover:underline">Sign in</Link></div>}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <ErrorAlert error={error} />
-        <div className="space-y-2">
-          <Label htmlFor="full_name">Full name</Label>
-          <Input id="full_name" {...register("full_name")} aria-invalid={!!errors.full_name} />
-          {errors.full_name ? <p className="text-xs text-destructive">{errors.full_name.message}</p> : null}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} />
-          {errors.phone ? <p className="text-xs text-destructive">{errors.phone.message}</p> : null}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" {...register("email")} aria-invalid={!!errors.email} />
-          {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
-        </div>
-        <PasswordInput id="password" label="Password" error={errors.password?.message} {...register("password")} />
-        <PasswordInput id="password_confirmation" label="Confirm password" error={errors.password_confirmation?.message} {...register("password_confirmation")} />
-        <Button type="submit" className="w-full" disabled={submitting}>
+      <div className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <ErrorAlert error={error} />
+          <div className="space-y-2">
+            <Label htmlFor="full_name">Full name</Label>
+            <Input id="full_name" {...register("full_name")} aria-invalid={!!errors.full_name} />
+            {errors.full_name ? <p className="text-xs text-destructive">{errors.full_name.message}</p> : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} />
+            {errors.phone ? <p className="text-xs text-destructive">{errors.phone.message}</p> : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" {...register("email")} aria-invalid={!!errors.email} />
+            {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
+          </div>
+          <PasswordInput id="password" label="Password" error={errors.password?.message} {...register("password")} />
+          <PasswordInput id="password_confirmation" label="Confirm password" error={errors.password_confirmation?.message} {...register("password_confirmation")} />
+<Button type="submit" className="w-full" disabled={!isValid || submitting}>
           {submitting ? "Creating…" : "Create account"}
-        </Button>
-      </form>
+          </Button>
+        </form>
+        <OAuthButtons />
+      </div>
     </AuthCardShell>
   );
 }
