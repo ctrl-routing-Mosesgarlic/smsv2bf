@@ -1,4 +1,4 @@
-import { ApiError, parseErrorResponse } from "./errors";
+import { parseErrorResponse } from "./errors";
 
 interface ApiRequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
