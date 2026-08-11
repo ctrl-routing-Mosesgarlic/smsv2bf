@@ -1327,7 +1327,10 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    // Microtask deferral is required: eslint-config-next 16.3.0 enables
+    // react-hooks/set-state-in-effect as error, which flags the synchronous
+    // `void refresh()` call (setLoading runs in the effect's sync path).
+    void Promise.resolve().then(refresh);
   }, [refresh]);
 
   return { authenticated, userId, loading, refresh };
