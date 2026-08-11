@@ -761,11 +761,6 @@ import { isTokenResponse } from "@/lib/api/guards";
 import { parseErrorResponse } from "@/lib/api/errors";
 import { registerSchema } from "@/lib/schemas";
 
-interface RegisterSuccessBody {
-  data: { user_id: string };
-  message?: string;
-}
-
 interface RegisterOtpRequiredBody {
   otp_required: true;
   email: string;
