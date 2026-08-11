@@ -626,7 +626,7 @@ git commit -m "feat(auth): server identity proxy with silent token refresh"
 - [ ] **Step 1: Create `lib/api/client.ts`**
 
 ```ts
-import { ApiError, parseErrorResponse } from "./errors";
+import { parseErrorResponse } from "./errors";
 
 interface ApiRequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
