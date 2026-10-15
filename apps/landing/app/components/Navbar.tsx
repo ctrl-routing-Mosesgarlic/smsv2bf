@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Button from "./Button";
+import { LINKS } from "../lib/links";
 
 const navLinks = [
   { href: "/about", label: "About" },
@@ -24,7 +25,7 @@ export default function Navbar() {
             </Link>
           ))}
         </div>
-        <Button>Get Started</Button>
+        <Button href={LINKS.signUp}>Get Started</Button>
       </nav>
     </div>
   );

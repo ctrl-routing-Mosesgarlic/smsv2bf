@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "@cbc/ui/tokens.css";
 
+@source "../../../packages/ui/src";
+@source "../../../packages/shared/src";
+
 @theme inline {
   --color-primary: var(--cbc-primary);
   --color-on-primary: var(--cbc-on-primary);

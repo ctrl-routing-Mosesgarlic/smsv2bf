@@ -1,5 +1,6 @@
 import SectionWrapper from "../components/SectionWrapper";
 import Button from "../components/Button";
+import { LINKS } from "../lib/links";
 
 const categories = [
   {
@@ -69,8 +70,8 @@ export default function FaqPage() {
             Our team is here to help. Reach out and we will get back to you within 24 hours.
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
-            <Button variant="primary">Contact Us</Button>
-            <Button variant="outline">Book a Demo</Button>
+            <Button variant="primary" href={LINKS.contact}>Contact Us</Button>
+            <Button variant="outline" href={LINKS.contact}>Book a Demo</Button>
           </div>
         </div>
       </SectionWrapper>

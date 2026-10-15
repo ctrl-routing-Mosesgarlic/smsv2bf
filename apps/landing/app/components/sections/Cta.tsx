@@ -1,5 +1,6 @@
 import SectionWrapper from "../SectionWrapper";
 import Button from "../Button";
+import { LINKS } from "../../lib/links";
 
 export default function Cta() {
   return (
@@ -13,8 +14,8 @@ export default function Cta() {
           started free — no credit card required.
         </p>
         <div className="mt-10 flex items-center gap-4">
-          <Button variant="primary">Start Your Free Trial</Button>
-          <Button variant="outline">Talk to Sales</Button>
+          <Button variant="primary" href={LINKS.signUp}>Start Your Free Trial</Button>
+          <Button variant="outline" href={LINKS.contact}>Talk to Sales</Button>
         </div>
       </div>
     </SectionWrapper>

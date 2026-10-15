@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { API_ROUTES } from '@cbc/config/routes';
 
 /**
@@ -9,11 +9,12 @@ import { API_ROUTES } from '@cbc/config/routes';
  *   region: Region;
  * }
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   try {
-    const response = await fetch(`${baseUrl}${API_ROUTES.context}`, {
+    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? '';
+    const response = await fetch(`${baseUrl}${API_ROUTES.context}?host=${encodeURIComponent(host)}`, {
       headers: {
         Accept: 'application/json',
       },

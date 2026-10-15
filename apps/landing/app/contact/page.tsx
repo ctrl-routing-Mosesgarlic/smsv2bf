@@ -41,7 +41,7 @@ export default function ContactPage() {
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              <form id="contact-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
                 <div>
                   <label htmlFor="name" className="text-sm font-medium">Name</label>
                   <input
@@ -127,7 +127,7 @@ export default function ContactPage() {
             Book a personalised demo and we will walk you through the platform tailored to your school.
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
-            <Button variant="primary">Book a Demo</Button>
+            <Button variant="primary" href="#contact-form">Book a Demo</Button>
           </div>
         </div>
       </SectionWrapper>

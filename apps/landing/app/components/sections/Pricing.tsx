@@ -1,6 +1,7 @@
 import { Check, X } from "@phosphor-icons/react/dist/ssr";
 import SectionWrapper from "../SectionWrapper";
 import Button from "../Button";
+import { LINKS } from "../../lib/links";
 import { cn } from "../../lib/utils";
 
 type Feature = { label: string; included: boolean; note?: string };
@@ -144,7 +145,7 @@ function PricingCard({ plan }: { plan: Plan }) {
           ))}
         </ul>
       </div>
-      <Button variant={buttonVariant} className="mt-auto">
+      <Button variant={buttonVariant} href={plan.cta.includes("Contact") ? LINKS.contact : LINKS.signUp} className="mt-auto">
         {plan.cta}
       </Button>
     </div>

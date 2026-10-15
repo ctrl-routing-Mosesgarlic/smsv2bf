@@ -25,13 +25,29 @@ export interface AuthTokens {
 }
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password: string;
-  tenant_slug?: string;
+  tenant_id?: string;
 }
 
 export interface OtpRequest {
   phone: string;
   code: string;
   purpose: 'verification' | 'password_reset';
+}
+
+export interface LoginSuccess {
+  data: {
+    access_token: string;
+    refresh_token: string;
+    token_type: 'Bearer';
+    expires_in: number;
+    user_id: string;
+  };
+}
+
+export interface LoginMfaRequired {
+  mfa_required: true;
+  mfa_token: string;
+  message: string;
 }

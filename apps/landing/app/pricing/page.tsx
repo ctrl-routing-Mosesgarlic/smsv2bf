@@ -1,6 +1,7 @@
 import { Check, X } from "@phosphor-icons/react/dist/ssr";
 import SectionWrapper from "../components/SectionWrapper";
 import Button from "../components/Button";
+import { LINKS } from "../lib/links";
 
 const plans = [
   {
@@ -152,7 +153,7 @@ export default function PricingPage() {
                   ))}
                 </ul>
               </div>
-              <Button variant={plan.popular ? "primary" : "ghost"} className="mt-auto">
+              <Button variant={plan.popular ? "primary" : "ghost"} href={plan.cta.includes("Contact") ? LINKS.contact : LINKS.signUp} className="mt-auto">
                 {plan.cta}
               </Button>
             </div>

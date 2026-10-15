@@ -1,5 +1,6 @@
 import SectionWrapper from "../SectionWrapper";
 import Button from "../Button";
+import { LINKS } from "../../lib/links";
 
 export default function Hero() {
   return (
@@ -14,8 +15,8 @@ export default function Hero() {
           platform built for Kenya&apos;s Competency-Based Curriculum.
         </p>
         <div className="mt-10 flex items-center gap-4">
-          <Button variant="primary">Start Free Trial</Button>
-          <Button variant="outline">Explore Modules</Button>
+          <Button variant="primary" href={LINKS.signUp}>Start Free Trial</Button>
+          <Button variant="outline" href={LINKS.modules}>Explore Modules</Button>
         </div>
       </div>
       <div className="mt-16 px-8">

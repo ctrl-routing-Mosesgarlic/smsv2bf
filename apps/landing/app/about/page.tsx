@@ -1,9 +1,10 @@
 import SectionWrapper from "../components/SectionWrapper";
 import Button from "../components/Button";
+import { LINKS } from "../lib/links";
 
 const team = [
-  { name: "Dr. Jane Kimani", role: "CEO & Co-Founder", bio: "Former principal with 20 years in Kenyan education. Led the CBC transition at three national schools." },
-  { name: "Kevin Omondi", role: "CTO & Co-Founder", bio: "Software engineer specialising in ed-tech platforms. Previously built assessment tools for KICD." },
+  { name: "Moses Muranja", role: "CEO & Co-Founder", bio: "Former principal with 20 years in Kenyan education. Led the CBC transition at three national schools." },
+  { name: "David Canavan", role: "CTO & Co-Founder", bio: "Software engineer specialising in ed-tech platforms. Previously built assessment tools for KICD." },
   { name: "Faith Nyambura", role: "Head of Product", bio: "Product leader focused on making school management intuitive for non-technical staff." },
   { name: "Samuel Kiprop", role: "Head of Engineering", bio: "Leads the engineering team building scalable infrastructure for multi-school deployments." },
   { name: "Grace Wanjiku", role: "Head of Customer Success", bio: "Ensures every school gets the most out of the platform with tailored onboarding and training." },
@@ -126,8 +127,8 @@ export default function AboutPage() {
             CBC SchoolMS can transform your school.
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
-            <Button variant="primary">Book a Demo</Button>
-            <Button variant="outline">Contact Us</Button>
+            <Button variant="primary" href={LINKS.contact}>Book a Demo</Button>
+            <Button variant="outline" href={LINKS.contact}>Contact Us</Button>
           </div>
         </div>
       </SectionWrapper>

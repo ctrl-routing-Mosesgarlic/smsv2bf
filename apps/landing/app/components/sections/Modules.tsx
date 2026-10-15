@@ -2,6 +2,7 @@
 
 import SectionWrapper from "../SectionWrapper"
 import Button from "../Button"
+import { LINKS } from "../../lib/links";
 import { StackingCards } from "../StackingCards"
 
 const moduleGroups = [
@@ -65,7 +66,7 @@ export default function Modules() {
               <p className="mt-2 text-base leading-relaxed text-foreground/60">
                 {group.description}
               </p>
-              <Button variant="outline" className="mt-6 w-fit">Contact Sales</Button>
+              <Button variant="outline" href={LINKS.contact} className="mt-6 w-fit">Contact Sales</Button>
             </div>
           </div>
         ))}

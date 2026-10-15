@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { AUTH_ROUTES } from '@cbc/config/routes';
+import { API_ROUTES, AUTH_ROUTES } from '@cbc/config/routes';
 import { useHttpClient } from '@cbc/shared';
 import { useRouter } from 'next/navigation';
 
@@ -16,6 +16,7 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     passwordConfirmation: '',
+    consent: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,18 +32,18 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await httpClient.post('/auth/register', {
-        first_name: form.firstName,
-        last_name: form.lastName,
+      await httpClient.post(API_ROUTES.register, {
+        full_name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email,
-        phone: form.phone,
+        phone: form.phone || undefined,
         password: form.password,
-        password_confirmation: form.passwordConfirmation,
+        consent: form.consent,
       });
-      router.push(AUTH_ROUTES.login);
+      router.push(`${AUTH_ROUTES.login}?registered=1`);
     } catch (err: unknown) {
-      const apiError = err as { message?: string };
-      setError(apiError.message || 'Registration failed.');
+      const apiError = err as { message?: string; context?: Record<string, string[] | string> };
+      const first = apiError.context ? Object.values(apiError.context)[0] : undefined;
+      setError((Array.isArray(first) ? first[0] : first) || apiError.message || 'Registration failed.');
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +51,9 @@ export default function RegisterPage() {
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const toggleConsent = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, consent: e.target.checked }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,14 +103,14 @@ export default function RegisterPage() {
       </div>
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-text-primary mb-1">
-          Phone
+          Phone <span className="text-text-muted font-normal">(optional)</span>
         </label>
         <input
           id="phone"
           type="tel"
           value={form.phone}
           onChange={update('phone')}
-          required
+          placeholder="0712345678"
           className="w-full border border-border-default rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-border-focus"
         />
       </div>
@@ -138,6 +142,16 @@ export default function RegisterPage() {
           className="w-full border border-border-default rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-border-focus"
         />
       </div>
+      <label className="flex items-start gap-2 text-xs text-text-muted">
+        <input
+          type="checkbox"
+          checked={form.consent}
+          onChange={toggleConsent}
+          required
+          className="mt-0.5"
+        />
+        <span>I agree to the processing of my personal data in line with the Data Protection Act.</span>
+      </label>
       <button
         type="submit"
         disabled={isLoading}

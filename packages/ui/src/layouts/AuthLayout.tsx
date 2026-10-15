@@ -17,8 +17,7 @@ export function AuthLayout({ children, title, subtitle, logo, size = 'sm' }: Aut
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-muted px-4 py-8">
       <div className={`w-full ${sizeMap[size]}`}>
-        {(logo || title) && (
-          <div className="text-center mb-8">
+        <div className="text-center mb-6">
             {logo || (
               <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-on-primary font-bold text-lg">CBC</span>
@@ -30,8 +29,7 @@ export function AuthLayout({ children, title, subtitle, logo, size = 'sm' }: Aut
             {subtitle && (
               <p className="text-sm text-text-secondary mt-1">{subtitle}</p>
             )}
-          </div>
-        )}
+        </div>
         <div className="bg-surface p-6 rounded-xl shadow-md border border-border-default">
           {children}
         </div>

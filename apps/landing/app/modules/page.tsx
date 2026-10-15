@@ -1,5 +1,6 @@
 import SectionWrapper from "../components/SectionWrapper";
 import Button from "../components/Button";
+import { LINKS } from "../lib/links";
 
 const moduleGroups = [
   {
@@ -145,8 +146,8 @@ export default function ModulesPage() {
             team and we will help you build the right plan.
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
-            <Button variant="primary">Book a Demo</Button>
-            <Button variant="outline">Contact Sales</Button>
+            <Button variant="primary" href={LINKS.contact}>Book a Demo</Button>
+            <Button variant="outline" href={LINKS.contact}>Contact Sales</Button>
           </div>
         </div>
       </SectionWrapper>

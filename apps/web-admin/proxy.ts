@@ -7,11 +7,13 @@ const PUBLIC_ROUTES = [...PUBLIC_ROUTE_PATHS, ...Object.values(AUTH_ROUTES)];
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (
-    PUBLIC_ROUTES.some(
-      (route) => pathname === route || pathname.startsWith(route)
-    )
-  ) {
+  const isPublic = PUBLIC_ROUTES.some((route) =>
+    route === '/'
+      ? pathname === '/'
+      : pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  if (isPublic) {
     return NextResponse.next();
   }
 

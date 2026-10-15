@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, ReactNode } from 'react';
+import { createContext, ReactNode, useMemo } from 'react';
 import { API_ROUTES } from '@cbc/config/routes';
 import { HttpClient } from './HttpClient';
 
@@ -13,9 +13,9 @@ interface HttpClientProviderProps {
 
 export function HttpClientProvider({
   children,
-  baseUrl = process.env.NEXT_PUBLIC_API_URL || API_ROUTES.base,
+  baseUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${API_ROUTES.base}`,
 }: HttpClientProviderProps) {
-  const client = new HttpClient(baseUrl);
+  const client = useMemo(() => new HttpClient(baseUrl), [baseUrl]);
   return (
     <HttpClientContext.Provider value={client}>
       {children}
